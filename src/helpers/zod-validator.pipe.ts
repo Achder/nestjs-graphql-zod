@@ -24,7 +24,7 @@ export class ZodValidatorPipe<T extends ZodType> implements PipeTransform {
 
   async transform(value: any, _metadata: ArgumentMetadata): Promise<any> {
     try {
-      return await this.input.parseAsync(value, { async: true })
+      return await this.input.parseAsync(value)
     }
     catch (error_) {
       const error = error_ as ZodError
@@ -32,7 +32,7 @@ export class ZodValidatorPipe<T extends ZodType> implements PipeTransform {
       const message = error.issues.map(issue => {
         const property = issue.path[ 0 ]
 
-        const targetValue = issue.path.reduce((prev, curr) => {
+        const targetValue = issue.path.reduce((prev: any, curr: any) => {
           if (!prev) return
           if (typeof prev !== 'object') return
           return prev[ curr ]
@@ -49,7 +49,7 @@ export class ZodValidatorPipe<T extends ZodType> implements PipeTransform {
 
           curr.value = targetValue
           curr.constraints = {
-            [ issue.code ]: issue.message
+            [ issue.code as string ]: issue.message
           }
         }
 
@@ -58,7 +58,7 @@ export class ZodValidatorPipe<T extends ZodType> implements PipeTransform {
           children,
           value: targetValue,
           constraints: {
-            [ issue.code ]: issue.message
+            [ issue.code as string ]: issue.message
           },
         } as ValidationError
       })

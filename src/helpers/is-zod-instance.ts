@@ -1,4 +1,4 @@
-import type { ZodTypeAny } from 'zod'
+import type { ZodType } from 'zod'
 import type { Type } from '@nestjs/common'
 
 /**
@@ -11,9 +11,9 @@ import type { Type } from '@nestjs/common'
  * @return {input is InstanceType<T>} A boolean value indicating if the
  * input is instance of given class.
  */
-export function isZodInstance<T extends Type<ZodTypeAny>>(
+export function isZodInstance<T extends Type<ZodType>>(
   klass: T,
   input: Object
 ): input is InstanceType<T> {
-  return klass.name === input.constructor.name
+  return input instanceof klass
 }

@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es2017",
+    "target": "es2021",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "module": "commonjs",
@@ -23,6 +23,7 @@
   "exclude": [
     "node_modules",
     "tests",
-    "dist"
+    "dist",
+    "vitest.config.ts"
   ]
 }

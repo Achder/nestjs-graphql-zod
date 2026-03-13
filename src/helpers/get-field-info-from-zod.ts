@@ -4,15 +4,13 @@ import {
   ZodBoolean,
   ZodDefault,
   ZodEnum,
-  ZodNativeEnum,
   ZodNullable,
   ZodNumber,
   ZodObject,
   ZodOptional,
+  ZodPipe,
   ZodString,
-  ZodTransformer,
   ZodType,
-  ZodTypeAny,
 } from 'zod'
 
 import { Int } from '@nestjs/graphql'
@@ -26,8 +24,6 @@ import {
 import { getZodObjectName } from './get-zod-object-name'
 import { isZodInstance } from './is-zod-instance'
 import { toTitleCase } from './to-title-case'
-
-import type { ZodNumberCheck } from 'zod'
 
 /**
  * Describes the properties of a zod type that can be used to apply to `Field`
@@ -109,13 +105,9 @@ export interface ZodTypeInfo {
 /**
  * The options for {@link getFieldInfoFromZod} function.
  *
- * The options extends {@link IModelFromZodOptions<T>} because it may create
- * instances if the given zod type was an object, therefore a class would
- * be created.
- *
  * @template T The zod type.
  */
-type Options<T extends ZodTypeAny> = IModelFromZodOptions<T> & {
+type Options<T extends ZodType> = IModelFromZodOptions<T> & {
   /**
    * Provides the decorator to decorate the dynamically generated class.
    *
@@ -135,18 +127,18 @@ type Options<T extends ZodTypeAny> = IModelFromZodOptions<T> & {
  * @param {string} key The key of the property of the `zod` object input,
  * that is being converted.
  *
- * @param {ZodTypeAny} prop The `zod` object property.
+ * @param {ZodType} prop The `zod` object property.
  * @param {Options<T>} options The options for conversion.
  * @return {ZodTypeInfo} The {@link ZodTypeInfo} of the property.
  */
-export function getFieldInfoFromZod<T extends ZodTypeAny>(
+export function getFieldInfoFromZod<T extends ZodType>(
   key: string,
-  prop: ZodTypeAny,
+  prop: ZodType,
   options: Options<T>
 ): ZodTypeInfo {
 
   if (isZodInstance(ZodArray, prop)) {
-    const data = getFieldInfoFromZod(key, prop.element, options)
+    const data = getFieldInfoFromZod(key, prop.element as ZodType, options)
 
     const {
       type,
@@ -180,7 +172,8 @@ export function getFieldInfoFromZod<T extends ZodTypeAny>(
     }
   }
   else if (isZodInstance(ZodNumber, prop)) {
-    const isInt = Boolean(prop._def.checks.find((check: ZodNumberCheck) => check.kind === 'int'))
+    const checks = prop._def.checks as any[] | undefined
+    const isInt = Boolean(checks?.find((check: any) => check.isInt === true))
 
     return {
       type: isInt ? Int : Number,
@@ -195,7 +188,7 @@ export function getFieldInfoFromZod<T extends ZodTypeAny>(
       isOfArray,
       isItemNullable,
       isItemOptional,
-    } = getFieldInfoFromZod(key, prop.unwrap(), options)
+    } = getFieldInfoFromZod(key, prop.unwrap() as ZodType, options)
 
     return {
       type,
@@ -249,7 +242,7 @@ export function getFieldInfoFromZod<T extends ZodTypeAny>(
       isOptional: prop.isOptional(),
     }
   }
-  else if (isZodInstance(ZodEnum, prop) || isZodInstance(ZodNativeEnum, prop)) {
+  else if (isZodInstance(ZodEnum, prop)) {
     return {
       type: prop,
       isNullable: prop.isNullable(),
@@ -258,13 +251,14 @@ export function getFieldInfoFromZod<T extends ZodTypeAny>(
     }
   }
   else if (isZodInstance(ZodDefault, prop)) {
-    return getFieldInfoFromZod(key, prop._def.innerType, options)
+    return getFieldInfoFromZod(key, prop._def.innerType as ZodType, options)
   }
-  else if (isZodInstance(ZodTransformer, prop)) {
-    return getFieldInfoFromZod(key, prop.innerType(), options)
+  else if (isZodInstance(ZodPipe, prop)) {
+    return getFieldInfoFromZod(key, prop._def.in as ZodType, options)
   }
   else if (isZodInstance(ZodNullable, prop)) {
-    return getFieldInfoFromZod(key, prop._def.innerType, options)
+    const inner = getFieldInfoFromZod(key, prop._def.innerType as ZodType, options)
+    return { ...inner, isNullable: true }
   }
   else {
     const { getScalarTypeFor = getDefaultTypeProvider() } = options
@@ -307,13 +301,12 @@ export module getFieldInfoFromZod {
     ZodBoolean,
     ZodDefault,
     ZodEnum,
-    ZodNativeEnum,
     ZodNullable,
     ZodNumber,
     ZodObject,
     ZodOptional,
+    ZodPipe,
     ZodString,
-    ZodTransformer,
   ] as const
 
   /**

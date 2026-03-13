@@ -3,14 +3,14 @@ import type { WrapWithZodOptions } from './zod-options-wrapper.interface'
 import type { TypeProvider } from '../types/type-provider'
 import type { EnumProvider } from '../types/enum-provider'
 
-import type { AnyZodObject } from 'zod'
+import type { ZodObject } from 'zod'
 import type { BaseTypeOptions } from '@nestjs/graphql'
 
 import { IModelFromZodOptions, modelFromZod } from '../model-from-zod'
 import { decorateWithZodInput } from './decorate-with-zod-input'
 import { makeDecoratorFromFactory } from './make-decorator-from-factory'
 
-type BaseOptions<T extends AnyZodObject> = WrapWithZodOptions<BaseTypeOptions, T>
+type BaseOptions<T extends ZodObject> = WrapWithZodOptions<BaseTypeOptions, T>
 
 let DEFAULT_TYPE_PROVIDER: TypeProvider | undefined
 let DEFAULT_ENUM_PROVIDER: EnumProvider | undefined
@@ -32,7 +32,7 @@ let DEFAULT_ENUM_PROVIDER: EnumProvider | undefined
  *
  * @return {MethodDecorator} A method decorator.
  */
-export function MethodWithZodModel<T extends AnyZodObject>(
+export function MethodWithZodModel<T extends ZodObject>(
   input: T,
   nameOrOptions: string | BaseOptions<T> | undefined,
   graphqlDecoratorFactory: GraphQLMDF<BaseTypeOptions>,
@@ -89,7 +89,7 @@ export function MethodWithZodModel<T extends AnyZodObject>(
  *
  * @return {MethodDecorator} A method decorator.
  */
-export function MethodWithZod<T extends AnyZodObject>(
+export function MethodWithZod<T extends ZodObject>(
   input: T,
   nameOrOptions: string | BaseOptions<T> | undefined,
   graphqlDecoratorFactory: GraphQLMDF<BaseTypeOptions>
@@ -110,12 +110,6 @@ export function MethodWithZod<T extends AnyZodObject>(
 
 /**
  * Sets the default type provider for custom GraphQL Scalars.
- *
- * The type name will be calculated and it will be similar to `TypeScript`
- * types such as: `Record<Optional<String>, Array<Number | String>>`.
- *
- * The user will provide custom scalar type to use for that kind of
- * zod validation.
  *
  * @export
  * @param {TypeProvider} fn The type provider.

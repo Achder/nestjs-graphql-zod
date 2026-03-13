@@ -1,4 +1,4 @@
-import { AnyZodObject, infer as Infer, ZodObject, ZodTypeAny } from 'zod'
+import { ZodObject, ZodType, output } from 'zod'
 
 import { PipeTransform, Type } from '@nestjs/common'
 import { Args, ArgsOptions } from '@nestjs/graphql'
@@ -60,7 +60,7 @@ type CustomDecoratorOptions = {
 
 type DecoratorOptions = ArgsOptions & CustomDecoratorOptions
 
-let GENERATED_TYPES: WeakMap<ZodTypeAny, object> | undefined
+let GENERATED_TYPES: WeakMap<ZodType, object> | undefined
 let USED_NAMES: string[] | undefined
 
 /**
@@ -71,12 +71,12 @@ let USED_NAMES: string[] | undefined
  * @param {CustomDecoratorOptions} options The custom decorator options.
  * @return {*} The newly or previously created class instance.
  */
-function _getOrCreateRegisteredType<T extends AnyZodObject>(
+function _getOrCreateRegisteredType<T extends ZodObject>(
   input: T,
   options: CustomDecoratorOptions
 ) {
   if (!GENERATED_TYPES) { GENERATED_TYPES = new WeakMap() }
-  let RegisteredType = GENERATED_TYPES.get(input) as Type<Infer<T>> | undefined
+  let RegisteredType = GENERATED_TYPES.get(input) as Type<output<T>> | undefined
   if (RegisteredType) return RegisteredType
 
   const { name, description } = extractNameAndDescription(input, {})
@@ -140,7 +140,7 @@ function _getSafeName(name: string): string {
  * @return {ParameterDecorator} A {@link ParameterDecorator} for GraphQL
  * argument.
  */
-export function ZodArgs<T extends ZodTypeAny>(
+export function ZodArgs<T extends ZodType>(
   input: T,
   property: string,
   options: DecoratorOptions,
@@ -161,7 +161,7 @@ export function ZodArgs<T extends ZodTypeAny>(
  * @return {ParameterDecorator} A {@link ParameterDecorator} for GraphQL
  * argument.
  */
-export function ZodArgs<T extends ZodTypeAny>(
+export function ZodArgs<T extends ZodType>(
   input: T,
   options: DecoratorOptions,
   ...pipes: PT[]
@@ -183,7 +183,7 @@ export function ZodArgs<T extends ZodTypeAny>(
  * @return {ParameterDecorator} A {@link ParameterDecorator} for GraphQL
  * argument.
  */
-export function ZodArgs<T extends ZodTypeAny>(
+export function ZodArgs<T extends ZodType>(
   input: T,
   property: string,
   ...pipes: PT[]
@@ -202,12 +202,12 @@ export function ZodArgs<T extends ZodTypeAny>(
  * @return {ParameterDecorator} A {@link ParameterDecorator} for GraphQL
  * argument.
  */
-export function ZodArgs<T extends ZodTypeAny>(
+export function ZodArgs<T extends ZodType>(
   input: T,
   ...pipes: PT[]
 ): ParameterDecorator
 
-export function ZodArgs<T extends ZodTypeAny>(
+export function ZodArgs<T extends ZodType>(
   input: T,
   propertyOrOptions?: string | DecoratorOptions | PT,
   optionsOrPipe?: DecoratorOptions | PT,
@@ -261,7 +261,7 @@ export function ZodArgs<T extends ZodTypeAny>(
   }
   else {
     const RegisteredType = _getOrCreateRegisteredType(
-      input as AnyZodObject,
+      input as ZodObject,
       {
         getScalarTypeFor
       }
@@ -316,7 +316,7 @@ export module ZodArgs {
   /**
    * A type for inferring the type of a given `zod` validation object.
    */
-  export type Of<T extends ZodTypeAny> = Infer<T>
+  export type Of<T extends ZodType> = output<T>
 
   /**
    * Frees the used objects during the startup.

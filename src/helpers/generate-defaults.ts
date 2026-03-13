@@ -1,24 +1,22 @@
-import { AnyZodObject, ZodDefault, ZodObject, ZodTypeAny } from 'zod'
+import { ZodDefault, ZodObject, ZodType } from 'zod'
 
 import { isZodInstance } from './is-zod-instance'
 
 /**
  * Generates the default values for given object.
  *
- * This function is recursive with {@link generateDefaults}.
- *
- * @param {AnyZodObject} input The input.
- * @return {Record<string, ZodTypeAny>} A record of default values.
+ * @param {ZodObject} input The input.
+ * @return {Record<string, ZodType>} A record of default values.
  */
-function generateDefaultsForObject(input: AnyZodObject) {
+function generateDefaultsForObject(input: ZodObject) {
   return Object.keys(input.shape).reduce((curr, key) => {
-    const res = generateDefaults<ZodTypeAny>(input.shape[ key ])
-    if (res) {
+    const res = generateDefaults<ZodType>(input.shape[ key ] as ZodType)
+    if (res !== undefined) {
       curr[ key ] = res
     }
 
     return curr
-  }, {} as Record<string, ZodTypeAny>)
+  }, {} as Record<string, any>)
 }
 
 /**
@@ -30,11 +28,11 @@ function generateDefaultsForObject(input: AnyZodObject) {
  * @return {*} A record containing keys and the zod
  * values with defaults.
  */
-export function generateDefaults<T extends ZodTypeAny>(input: T) {
+export function generateDefaults<T extends ZodType>(input: T) {
   if (isZodInstance(ZodObject, input)) {
-    return generateDefaultsForObject(input as AnyZodObject)
+    return generateDefaultsForObject(input as ZodObject)
   }
   else if (isZodInstance(ZodDefault, input)) {
-    return input._def.defaultValue?.()
+    return input._def.defaultValue
   }
 }

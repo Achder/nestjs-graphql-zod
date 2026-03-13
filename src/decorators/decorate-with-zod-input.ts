@@ -2,7 +2,7 @@ import type { BaseOptions } from './zod-options-wrapper.interface'
 import type { DynamicZodModelClass } from './types'
 
 import { plainToInstance } from 'class-transformer'
-import { AnyZodObject, ZodError } from 'zod'
+import { ZodObject, ZodError } from 'zod'
 
 import { BadRequestException } from '@nestjs/common'
 
@@ -24,7 +24,7 @@ type Fn = (...args: any) => any
  * @return {F}
  */
 export function decorateWithZodInput<
-  T extends AnyZodObject,
+  T extends ZodObject,
   F extends Fn = Fn
 >(
   originalFunction: F,
@@ -46,7 +46,7 @@ export function decorateWithZodInput<
       return result
         .then(output => input.parseAsync(output))
         .then(output => parseToInstance ? plainToInstance(model, output) : output)
-        .catch((error: Error) => {
+        .catch((error: Error | ZodError) => {
           if (error instanceof ZodError) {
             throw new BadRequestException(error.issues)
           }

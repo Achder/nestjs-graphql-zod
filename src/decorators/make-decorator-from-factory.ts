@@ -1,4 +1,4 @@
-import type { AnyZodObject } from 'zod'
+import type { ZodObject } from 'zod'
 import type {
   DynamicZodModelClass,
   GraphQLCDF,
@@ -28,7 +28,7 @@ import type {
  * @return {MethodDecorator | ClassDecorator | ParameterDecorator} A decorator. 
  */
 export function makeDecoratorFromFactory<
-  T extends AnyZodObject,
+  T extends ZodObject,
   O extends SupportedOptionTypes
 >(
   nameOrOptions: WrapWithZodOptions<O, T> | string | undefined,

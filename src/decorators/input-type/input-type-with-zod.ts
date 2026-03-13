@@ -3,7 +3,7 @@ import { InputType, InputTypeOptions } from '@nestjs/graphql'
 import { extractNameAndDescription, parseShape } from '../../helpers'
 import { ZodObjectKey } from '../../helpers/constants'
 
-import type { AnyZodObject } from 'zod'
+import type { ZodObject } from 'zod'
 import type { Options } from './options.inteface'
 
 /**
@@ -16,7 +16,7 @@ import type { Options } from './options.inteface'
  * @param {T} input The zod input object.
  * @return {ClassDecorator} A {@link ClassDecorator}.
  */
-export function InputTypeWithZod<T extends AnyZodObject>(input: T): ClassDecorator
+export function InputTypeWithZod<T extends ZodObject>(input: T): ClassDecorator
 
 /**
  * Decorator that marks a class as a GraphQL input type.
@@ -29,7 +29,7 @@ export function InputTypeWithZod<T extends AnyZodObject>(input: T): ClassDecorat
  * @param {Options<T>} options The options for the decorator.
  * @return {ClassDecorator} A {@link ClassDecorator}.
  */
-export function InputTypeWithZod<T extends AnyZodObject>(input: T, options: Options<T>): ClassDecorator
+export function InputTypeWithZod<T extends ZodObject>(input: T, options: Options<T>): ClassDecorator
 
 /**
  * Decorator that marks a class as a GraphQL input type.
@@ -43,9 +43,9 @@ export function InputTypeWithZod<T extends AnyZodObject>(input: T, options: Opti
  * @param {Options<T>} [options] The options for the decorator.
  * @return {ClassDecorator} A {@link ClassDecorator}.
  */
-export function InputTypeWithZod<T extends AnyZodObject>(input: T, name: string, options?: Options<T>): ClassDecorator
+export function InputTypeWithZod<T extends ZodObject>(input: T, name: string, options?: Options<T>): ClassDecorator
 
-export function InputTypeWithZod<T extends AnyZodObject>(
+export function InputTypeWithZod<T extends ZodObject>(
   input: T,
   nameOrOptions?: string | Options<T>,
   options?: Options<T>
@@ -93,10 +93,7 @@ export function InputTypeWithZod<T extends AnyZodObject>(
       ...zodOptions,
       name,
       description,
-      getDecorator(_, key) {
-        // Returning another `@InputType()` as we have another key now, that
-        // will be another sub class built, therefore we need to decorate that
-        // with another `@InputType()`.
+      getDecorator(_: any, key: string) {
         return buildInputTypeDecorator(key, inputTypeOptions)
       },
       getScalarTypeFor: zodOptions.getScalarTypeFor,
@@ -133,4 +130,3 @@ export function buildInputTypeDecorator(name?: string, opts?: InputTypeOptions):
 
   return InputType()
 }
-

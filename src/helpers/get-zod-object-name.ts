@@ -5,7 +5,6 @@ import {
   ZodBoolean,
   ZodDate,
   ZodDefault,
-  ZodEffects,
   ZodEnum,
   ZodLiteral,
   ZodNull,
@@ -13,10 +12,10 @@ import {
   ZodNumber,
   ZodObject,
   ZodOptional,
+  ZodPipe,
   ZodRecord,
   ZodString,
-  ZodTransformer,
-  ZodTypeAny,
+  ZodType,
   ZodUnion,
 } from 'zod'
 
@@ -27,32 +26,32 @@ import { toTitleCase } from './to-title-case'
  * Builds the corresponding zod type name.
  *
  * @export
- * @param {ZodTypeAny} instance The zod type instance.
+ * @param {ZodType} instance The zod type instance.
  * @return {string} A built type name for the input.
  *
  * @__PURE__
  */
-export function getZodObjectName(instance: ZodTypeAny): string {
+export function getZodObjectName(instance: ZodType): string {
   if (isZodInstance(ZodArray, instance)) {
-    const innerName = getZodObjectName(instance.element)
+    const innerName = getZodObjectName(instance.element as ZodType)
     return `Array<${innerName}>`
   }
 
   if (isZodInstance(ZodOptional, instance)) {
-    const innerName = getZodObjectName(instance.unwrap())
+    const innerName = getZodObjectName(instance.unwrap() as ZodType)
     return `Optional<${innerName}>`
   }
 
-  if (isZodInstance(ZodTransformer, instance)) {
-    return getZodObjectName(instance.innerType())
+  if (isZodInstance(ZodPipe, instance)) {
+    return getZodObjectName(instance._def.in as ZodType)
   }
 
   if (isZodInstance(ZodDefault, instance)) {
-    return getZodObjectName(instance._def.innerType)
+    return getZodObjectName(instance._def.innerType as ZodType)
   }
 
   if (isZodInstance(ZodEnum, instance)) {
-    const { description = '', Enum } = instance
+    const { description = '' } = instance
     const nameSeparatorIndex = description.indexOf(':')
 
     if (nameSeparatorIndex > 0) {
@@ -60,7 +59,7 @@ export function getZodObjectName(instance: ZodTypeAny): string {
       return `Enum<${name}>`
     }
     else {
-      const values = Object.values(Enum)
+      const values = Object.values(instance.enum)
       const name = values.join(',')
       return `Enum<${name}>`
     }
@@ -80,14 +79,9 @@ export function getZodObjectName(instance: ZodTypeAny): string {
   }
 
   if (isZodInstance(ZodRecord, instance)) {
-    const { keySchema, valueSchema } = instance
-    const keyName = getZodObjectName(keySchema)
-    const valueName = getZodObjectName(valueSchema)
+    const keyName = getZodObjectName(instance._def.keyType as ZodType)
+    const valueName = getZodObjectName(instance._def.valueType as ZodType)
     return `Record<${keyName}, ${valueName}>`
-  }
-
-  if (isZodInstance(ZodEffects, instance)) {
-    return getZodObjectName(instance.innerType())
   }
 
   if (isZodInstance(ZodLiteral, instance)) {
@@ -114,11 +108,11 @@ export function getZodObjectName(instance: ZodTypeAny): string {
   }
 
   if (isZodInstance(ZodUnion, instance)) {
-    return instance.options.map(getZodObjectName).join(' | ')
+    return (instance.options as ZodType[]).map(o => getZodObjectName(o)).join(' | ')
   }
 
   if (isZodInstance(ZodNullable, instance)) {
-    const innerName = getZodObjectName(instance._def.innerType)
+    const innerName = getZodObjectName(instance._def.innerType as ZodType)
     return `Nullable<${innerName}>`
   }
 

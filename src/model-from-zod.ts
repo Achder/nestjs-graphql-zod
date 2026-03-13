@@ -2,14 +2,14 @@ import type { Type } from '@nestjs/common'
 import type { EnumProvider } from './types/enum-provider'
 import type { TypeProvider } from './types/type-provider'
 
-import type { AnyZodObject, ParseParams, TypeOf, ZodError, ZodTypeAny } from 'zod'
+import type { ZodObject, ZodError, ZodType, output } from 'zod'
 
 import { ObjectType, ObjectTypeOptions } from '@nestjs/graphql'
 
 import { extractNameAndDescription, parseShape } from './helpers'
 import { ZodObjectKey } from './helpers/constants'
 
-export interface IModelFromZodOptions<T extends ZodTypeAny>
+export interface IModelFromZodOptions<T extends ZodType>
   extends ObjectTypeOptions {
   /**
    * The name of the model class in GraphQL schema.
@@ -80,29 +80,29 @@ export interface IModelFromZodOptions<T extends ZodTypeAny>
    *
    * @memberof IModelFromZodOptions
    */
-  onParseError?<K extends keyof TypeOf<T>>(
+  onParseError?<K extends keyof output<T>>(
     key: K,
-    newValue: TypeOf<T>[ K ],
-    oldValue: TypeOf<T>[ K ] | undefined,
-    error: ZodError<TypeOf<T>[ K ]>
-  ): TypeOf<T>[ keyof TypeOf<T> ] | void
+    newValue: output<T>[ K ],
+    oldValue: output<T>[ K ] | undefined,
+    error: ZodError<output<T>[ K ]>
+  ): output<T>[ keyof output<T> ] | void
 
   /**
-   * A function that can be used for providing {@link zod.ParseParams} for
+   * A function that can be used for providing parse options for
    * a key during the parsing process (on set).
    *
    * @template K The type of the key.
    * @param {K} key The key that is being parsed.
    * @param {(T[ K ] | undefined)} previousValue The previously set value.
-   * @return {Partial<zod.ParseParams>} The {@link zod.ParseParams} for the
+   * @return {Record<string, unknown>} The parse options for the
    * current parsing stage.
    *
    * @memberof IModelFromZodOptions
    */
-  onParsing?<K extends keyof TypeOf<T>>(
+  onParsing?<K extends keyof output<T>>(
     key: K,
-    previousValue: TypeOf<T>[ K ] | undefined
-  ): Partial<ParseParams>
+    previousValue: output<T>[ K ] | undefined
+  ): Record<string, unknown>
 
   /**
    * Gets the scalar type for given type name.
@@ -146,7 +146,7 @@ export interface IModelFromZodOptions<T extends ZodTypeAny>
   getEnumType?: EnumProvider
 }
 
-type Options<T extends ZodTypeAny>
+type Options<T extends ZodType>
   = IModelFromZodOptions<T>
   & {
     /**
@@ -160,7 +160,7 @@ type Options<T extends ZodTypeAny>
     getDecorator?(zodInput: T, key: string): ClassDecorator
   }
 
-let _generatedClasses: WeakMap<ZodTypeAny, Type> | undefined
+let _generatedClasses: WeakMap<ZodType, Type> | undefined
 
 /**
  * Creates a dynamic class which will be compatible with GraphQL, from a
@@ -174,15 +174,15 @@ let _generatedClasses: WeakMap<ZodTypeAny, Type> | undefined
  * compatible with `GraphQL`.
  */
 export function modelFromZodBase<
-  T extends AnyZodObject,
+  T extends ZodObject,
   O extends Options<T>
 >(
   zodInput: T,
   options: O = {} as O,
   decorator: ClassDecorator
-): Type<TypeOf<T>> {
+): Type<output<T>> {
   const previousRecord
-    = (_generatedClasses ??= new WeakMap<ZodTypeAny, Type>())
+    = (_generatedClasses ??= new WeakMap<ZodType, Type>())
       .get(zodInput)
 
   if (previousRecord) return previousRecord
@@ -216,7 +216,7 @@ export function modelFromZodBase<
   }
 
   _generatedClasses.set(zodInput, DynamicZodModel)
-  return DynamicZodModel as Type<TypeOf<T>>
+  return DynamicZodModel as Type<output<T>>
 }
 
 /**
@@ -231,9 +231,9 @@ export function modelFromZodBase<
  * compatible with `GraphQL`.
  */
 export function modelFromZod<
-  T extends AnyZodObject,
+  T extends ZodObject,
   O extends IModelFromZodOptions<T>
-  >(zodInput: T, options: O = {} as O): Type<TypeOf<T>> {
+  >(zodInput: T, options: O = {} as O): Type<output<T>> {
   const { name, description } = extractNameAndDescription(zodInput, options)
 
   const decorator = ObjectType(name, {

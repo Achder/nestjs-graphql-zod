@@ -1,9 +1,7 @@
 import {
-  infer as Infer,
-  ParseParams,
+  output,
   ZodDefault,
   ZodType,
-  ZodTypeAny,
 } from 'zod'
 
 import { isZodInstance } from './is-zod-instance'
@@ -17,19 +15,19 @@ import type { IModelFromZodOptions } from '../model-from-zod'
  * @export
  * @template T The type of the target object.
  * @param {keyof T} key The key of the property that is being created.
- * @param {zod.ZodTypeAny} input The zod object input.
+ * @param {ZodType} input The zod object input.
  * @param {IModelFromZodOptions<T>} opts The options.
  * @return {PropertyDescriptor} A {@link PropertyDescriptor}.
  */
 export function createZodPropertyDescriptor<T extends ZodType>(
-  key: keyof Infer<T>,
-  input: ZodTypeAny,
+  key: string | keyof output<T>,
+  input: ZodType,
   opts: IModelFromZodOptions<T>
 ): PropertyDescriptor {
   let localVariable: any
 
   if (isZodInstance(ZodDefault, input)) {
-    localVariable = input._def.defaultValue()
+    localVariable = input._def.defaultValue
   }
 
   const {
@@ -40,9 +38,9 @@ export function createZodPropertyDescriptor<T extends ZodType>(
     onParseError,
   } = opts
 
-  let keyProps: Partial<ParseParams> | undefined
+  let keyProps: Record<string, unknown> | undefined
   if (typeof onParsing === 'function') {
-    keyProps = onParsing(key, localVariable)
+    keyProps = onParsing(key as keyof output<T>, localVariable)
   }
 
   return {
@@ -60,10 +58,10 @@ export function createZodPropertyDescriptor<T extends ZodType>(
 
           if (typeof onParseError === 'function') {
             replaceValue = onParseError(
-              key,
+              key as keyof output<T>,
               newValue,
               localVariable,
-              result.error
+              result.error as any
             )
           }
 

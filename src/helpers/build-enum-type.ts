@@ -1,4 +1,4 @@
-import { AnyZodObject, infer as Infer, ZodEnum, ZodNativeEnum } from 'zod'
+import { ZodEnum, ZodObject } from 'zod'
 
 import { registerEnumType } from '@nestjs/graphql'
 
@@ -22,24 +22,22 @@ import type { IModelFromZodOptions } from '../model-from-zod'
  *
  * @return {object} The enum object.
  */
-export function buildEnumType<T extends AnyZodObject>(
-  key: keyof Infer<T>,
+export function buildEnumType<T extends ZodObject>(
+  key: keyof import('zod').output<T>,
   typeInfo: ZodTypeInfo,
   options: IModelFromZodOptions<T>
 ): object {
 
   const { type } = typeInfo
 
-  const isNative = isZodInstance(ZodNativeEnum, type)
-
-  if (isZodInstance(ZodEnum, type) || isNative) {
-    const Enum = isNative ? type.enum : type.Enum
+  if (isZodInstance(ZodEnum, type)) {
+    const Enum = type.enum
 
     let enumProvider = options.getEnumType ?? getDefaultEnumProvider()
 
     if (typeof enumProvider === 'function') {
       const replacement = enumProvider(Enum, {
-        isNative,
+        isNative: false,
         name: String(key),
         parentName: options.name,
         description: type.description,
